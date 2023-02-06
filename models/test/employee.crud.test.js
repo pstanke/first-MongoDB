@@ -1,6 +1,7 @@
 const Employee = require('../employee.model');
 const expect = require('chai').expect;
 const mongoose = require('mongoose');
+const Department = require('../department.model');
 
 describe('Employee Read data', () => {
   before(async () => {
@@ -15,17 +16,27 @@ describe('Employee Read data', () => {
   });
 
   before(async () => {
+    const testDepOne = new Department({
+      name: 'Testing',
+    });
+    await testDepOne.save();
+
+    const testDepTwo = new Department({
+      name: 'Accountant',
+    });
+    await testDepTwo.save();
+
     const testEmplOne = new Employee({
       firstName: 'Amanda',
       lastName: 'Doe',
-      department: 'Accountant',
+      department: testDepOne._id,
     });
     await testEmplOne.save();
 
     const testEmplTwo = new Employee({
       firstName: 'Jamal',
       lastName: 'Kalu',
-      department: 'Testing',
+      department: testDepTwo._id,
     });
     await testEmplTwo.save();
   });
@@ -42,8 +53,20 @@ describe('Employee Read data', () => {
     expect(employee.firstName).to.be.equal(expectedFirstName);
   });
 
+  it('should return all data with populated department', async () => {
+    const employee = await Employee.findOne({ firstName: 'Amanda' }).populate(
+      'department'
+    );
+    const expectedFirstName = 'Amanda';
+    expect(employee.firstName).to.be.equal(expectedFirstName);
+    expect(employee.department).to.not.be.a('string');
+    expect(employee.department).to.have.property('name');
+    expect(employee.department).to.have.property('_id');
+  });
+
   after(async () => {
     await Employee.deleteMany();
+    await Department.deleteMany();
   });
 });
 
